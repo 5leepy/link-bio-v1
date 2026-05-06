@@ -1,65 +1,124 @@
-import Image from "next/image";
+import { db } from "@/lib/db";
+import * as Icons from "lucide-react";
+import Link from "next/link";
 
-export default function Home() {
+interface Profile {
+  id: string;
+  name: string;
+  bio: string;
+  avatar_url: string;
+  theme: "light" | "dark";
+}
+
+interface LinkItem {
+  id: string;
+  title: string;
+  url: string;
+  icon_name: string;
+  order_index: number;
+}
+
+export default async function Home() {
+  // Fetch profile
+  const profiles = await db`SELECT * FROM profile LIMIT 1`;
+  const profile = profiles[0] as unknown as Profile;
+  const isDark = profile?.theme === "dark";
+
+  // Fetch active links sorted by order
+  const links = (await db`
+    SELECT * FROM links 
+    WHERE is_active = true 
+    ORDER BY order_index ASC
+  `) as unknown as LinkItem[];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className={`min-h-screen py-16 px-4 transition-colors duration-500 ${
+      isDark 
+        ? "bg-slate-950 text-slate-100" 
+        : "bg-gradient-to-b from-slate-50 to-slate-200 text-slate-900"
+    }`}>
+      <div className="max-w-md mx-auto flex flex-col items-center">
+        
+        {/* Profile Section */}
+        <div className="flex flex-col items-center mb-10 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="relative w-24 h-24 mb-4">
+            <div className={`absolute inset-0 rounded-full blur-sm opacity-20 scale-110 ${
+              isDark ? "bg-indigo-400" : "bg-indigo-500"
+            }`}></div>
+            {profile?.avatar_url ? (
+              <img 
+                src={profile.avatar_url} 
+                alt={profile.name} 
+                className={`w-full h-full rounded-full object-cover border-4 shadow-xl relative z-10 ${
+                  isDark ? "border-slate-800" : "border-white"
+                }`}
+              />
+            ) : (
+              <div className={`w-full h-full rounded-full flex items-center justify-center text-3xl font-bold border-4 shadow-xl relative z-10 ${
+                isDark ? "bg-indigo-500 border-slate-800 text-white" : "bg-indigo-600 border-white text-white"
+              }`}>
+                {profile?.name?.charAt(0) || "U"}
+              </div>
+            )}
+          </div>
+          <h1 className={`text-2xl font-bold mb-1 ${isDark ? "text-white" : "text-slate-900"}`}>
+            {profile?.name || "User Name"}
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className={`${isDark ? "text-slate-400" : "text-slate-600"} text-sm max-w-[280px] leading-relaxed`}>
+            {profile?.bio || "Welcome to my link-in-bio page."}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Links Section */}
+        <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+          {links.map((link, index) => (
+            <Link
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`group flex items-center p-4 border rounded-2xl shadow-sm transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
+                isDark 
+                  ? "bg-slate-900 border-slate-800 hover:bg-slate-800 hover:border-slate-700 text-slate-100" 
+                  : "bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-800"
+              }`}
+              style={{ animationDelay: `${(index + 1) * 100}ms` }}
+            >
+              <div className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors duration-300 shrink-0 ${
+                isDark 
+                  ? "bg-slate-800 group-hover:bg-indigo-900 text-slate-300 group-hover:text-indigo-300" 
+                  : "bg-slate-50 group-hover:bg-indigo-50 text-slate-600 group-hover:text-indigo-600"
+              }`}>
+                <DynamicIcon name={link.icon_name} className="w-5 h-5" />
+              </div>
+              <div className="ml-4 flex-1 font-medium text-base">
+                {link.title}
+              </div>
+              <Icons.ExternalLink className={`w-4 h-4 transition-colors ${
+                isDark ? "text-slate-600 group-hover:text-slate-400" : "text-slate-300 group-hover:text-slate-400"
+              }`} />
+            </Link>
+          ))}
+
+          {links.length === 0 && (
+            <div className={`text-center py-10 text-sm italic ${isDark ? "text-slate-600" : "text-slate-400"}`}>
+              No links available yet.
+            </div>
+          )}
         </div>
-      </main>
-    </div>
+
+        {/* Footer */}
+        <footer className={`mt-16 text-xs ${isDark ? "text-slate-600" : "text-slate-400"}`}>
+          <p>© {new Date().getFullYear()} {profile?.name || "User"}. All rights reserved.</p>
+        </footer>
+      </div>
+    </main>
   );
+}
+
+import { getIcon } from "@/lib/icons";
+
+function DynamicIcon({ name, className }: { name: string; className?: string }) {
+  const IconComponent = getIcon(name);
+  return <IconComponent className={className} />;
 }

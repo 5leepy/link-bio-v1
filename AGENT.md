@@ -3,7 +3,7 @@ Ini adalah proyek template "Link-in-Bio" yang di-deploy ke Vercel.
 Tujuan: Mengubah template statis menjadi dinamis dengan CMS / Admin Panel sederhana.
 
 # Tech Stack Utama
-- Framework: Next.js 15 (Wajib gunakan App Router)
+- Framework: Next.js terbaru (Wajib gunakan App Router)
 - Styling: Tailwind CSS
 - Database: Vercel Postgres (SQL)
 - Authentication: NextAuth.js v5 (Auth.js)
